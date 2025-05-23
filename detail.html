@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>英雄详情</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f6f2;
+            font-family: '方正舒体', sans-serif;
+        }
+
+        .card {
+            max-width: 420px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.322);
+            border-radius: 18px;
+            border: 1.5px solid #f5b971;
+            box-shadow: 0 4px 24px #f5e6c3a0;
+            padding: 24px 18px;
+        }
+
+        .title {
+            color: #d47c2f;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        button {
+            width: 60vw;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.377);
+            border-radius: calc(300vw/3.75);
+        }
+    </style>
+</head>
+
+<body>
+    <video id="bgVideo" autoplay loop playsinline
+        style="position:fixed;left:-140vw;top: -118px;;width:300vw;height:130vh;object-fit:cover;z-index:-1; transform: scale(.8);">
+        <source src="hhh.mp4" type="video/mp4">
+        您的浏览器不支持视频播放。
+    </video>
+    <div class="card">
+        <div class="title">英雄详情</div>
+        <div id="detail">加载中...</div>
+        <button id="videoBtn"
+            style="position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); padding:15px 30px; font-size:1.5em; z-index:100;">英雄视频点击播放</button>
+    </div>
+    <script>
+        function getQuery(name) { const m = location.search.match(new RegExp('([?&]' + name + ')=([^&]*)')); return m ? decodeURIComponent(m[2]) : ''; }
+        const id = getQuery('id');
+        const detail = document.getElementById('detail');
+        if (!id) { detail.innerHTML = '未获取到英雄ID'; }
+        else {
+            fetch(`https://api-vue-base.itheima.net/api/lol/info?id=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 200 && data.data) {
+                        const h = data.data.hero;
+                        const skins = data.data.skins;
+                        const spells = data.data.spells;
+                        detail.innerHTML = `
+              <div style='font-size:1.2rem;color:#d47c2f;font-weight:bold;'>${h.title}（${h.name}）</div>
+              <div style='color:#555;margin:6px 0;'>别名：${h.alias}</div>
+              <div style='color:#888;'>定位：${h.roles.join(' / ')} 难度：${h.difficulty}</div>
+              <div style='margin:10px 0;color:#d47c2f;'>皮肤：</div>
+              <div>${skins.map(s => `<span style='margin-right:8px;'>${s.name}</span>`).join('')}</div>
+              <div style='margin:10px 0;color:#d47c2f;'>技能：</div>
+              <div>${spells.map(sp => `<span style='margin-right:8px;'>${sp.name}</span>`).join('')}</div>
+            `;
+                    } else {
+                        detail.innerHTML = '未找到英雄详情';
+                    }
+                })
+                .catch(() => { detail.innerHTML = '加载失败'; });
+        }
+        document.body.addEventListener('click', function () {
+            var v = document.getElementById('bgVideo');
+            if (v && v.paused) {
+                v.play().catch(() => { });
+            }
+        }, { once: true });
+        document.getElementById('videoBtn').addEventListener('click', function () {
+            // 隐藏所有非视频组件
+            document.querySelectorAll('body > *:not(video)').forEach(el => {
+                if (el.id !== 'videoBtn') el.style.display = 'none';
+            });
+
+            // 播放视频
+            const video = document.querySelector('video');
+            video.style.display = 'block';
+            video.play();
+
+            // 隐藏按钮本身
+            this.style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>
