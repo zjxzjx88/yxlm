@@ -1,117 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英雄联盟列表</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { background: #181818; }
+    .lol-nav-btn { color: #fff; background: none; border: none; font-weight: bold; font-size: 1rem; padding: 0.5rem 1.2rem;  margin-right: 0.5rem; transition: background .2s; }
+    .lol-nav-btn.active, .lol-nav-btn:hover { background: #f5b971; color: #181818; }
+    .lol-card { background: #232323; border-radius: 1rem; box-shadow: 0 2px 12px #0006; border: 1.5px solid #f5b971; transition: transform .2s, box-shadow .2s; }
+    .lol-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 24px #f5e6c355; }
+    .lol-title { color: #f5b971; font-weight: bold; }
+    
+  </style>
 </head>
-
-<body style="margin:0;padding:0;min-height:100vh;font-family:'方正舒体',sans-serif;background:#181c24;">
-
-    <div class="bg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;overflow:hidden;">
-        <img src="0089GbAlgy1har8vaeawzj30u013ntgr.jpg" style="width:100vw;height:100vh;object-fit:cover;">
-        <div style="position:absolute;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(120deg,rgba(24,28,36,0.7) 60%,rgba(245,185,113,0.15) 100%);"></div>
-    </div>
-    <div class="container" style="max-width:520px;margin:0 auto;padding:38px 12px 0 12px;">
-        <div class="cute-card"
-            style="background:rgba(24,28,36,0.85);border-radius:20px;border:2px solid #cfa94a;box-shadow:0 6px 32px #000a;padding:28px 20px 20px 20px;backdrop-filter:blur(2px);">
-            <h2
-                style="text-align:center;color:#f5b971;font-size:2.2rem;margin-bottom:22px;text-shadow:0 2px 12px #000a;letter-spacing:2px;">
-                英雄联盟英雄资料库</h2>
-            <input id="searchInput" type="text" placeholder="输入英雄名、别名或定位进行搜索"
-                style="flex:1;padding:12px 16px;border-radius:10px;border:1.5px solid #cfa94a;font-size:1rem;outline:none;background:rgba(255,255,255,0.12);color:#fff;">
-            <button id="searchBtn" class="cute-btn"
-                style="padding:12px 22px;background:linear-gradient(90deg,#f5b971,#cfa94a);color:#222;border:none;border-radius:10px;font-size:1rem;cursor:pointer;font-weight:bold;box-shadow:0 2px 8px #cfa94a55;transition:transform .1s;">筛选</button>
-        </div>
-        <div id="heroList"
-            style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;">
-        </div>
-    </div>
-    </div>
-    <script>
-        const searchBtn = document.getElementById('searchBtn');
-        const searchInput = document.getElementById('searchInput');
-        const heroList = document.getElementById('heroList');
-        let allHeroes = [];
-        async function loadAllHeroes() {
-            heroList.innerHTML = '<span style="color:#aaa">正在召唤英雄，请稍候...</span>';
-            try {
-                const res = await fetch('https://api-vue-base.itheima.net/api/lol/search?q=');
-                const data = await res.json();
-                if (data.code === 200 && data.data && data.data.length > 0) {
-                    allHeroes = data.data;
-                    renderHeroes(allHeroes);
-                } else {
-                    heroList.innerHTML = '<span style="color:#f5b971">未找到符合条件的英雄，试试其他关键词吧！</span>';
-                }
-            } catch (e) {
-                heroList.innerHTML = '<span style="color:#f55">召唤失败，请检查网络后重试。</span>';
-            }
-        }
-        function renderHeroes(list) {
-            heroList.innerHTML = list.map(hero => `
-        <div onclick="location.href='detail.html?id=${hero.heroId}'" style="display:flex;align-items:center;gap:18px;margin-bottom:18px;background:rgba(24,28,36,0.92);border-radius:14px;padding:14px 12px;box-shadow:0 2px 12px #0006;cursor:pointer;transition:box-shadow .2s,border .2s;position:relative;border:2px solid transparent;overflow:hidden;"
-          onmouseover="this.style.borderColor='#f5b971';this.style.boxShadow='0 4px 18px #cfa94a88';" onmouseout="this.style.borderColor='transparent';this.style.boxShadow='0 2px 12px #0006';">
-          <img src="${hero.icon.replace(/[`\s]/g, '')}" alt="头像" style="width:60px;height:60px;border-radius:50%;border:2.5px solid #cfa94a;background:#fff;object-fit:cover;box-shadow:0 2px 8px #cfa94a55;">
-          <div style="flex:1;">
-            <div style="font-size:1.15rem;color:#f5b971;font-weight:bold;text-shadow:0 1px 6px #000a;">${hero.title}（${hero.name}）</div>
-            <div style="font-size:.98rem;color:#fff;margin:2px 0 4px 0;opacity:.85;">别名：${hero.alias}</div>
-            <div style="font-size:.92rem;color:#cfa94a;">英雄定位：${hero.roles.join(' / ')} 上手难度：${hero.difficulty}</div>
+<body class="min-h-screen">
+  <header class="bg-[#232323] shadow px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+    <span class="text-lg font-bold lol-title">英雄联盟列表</span>
+    <i class="fas fa-list text-yellow-500"></i>
+  </header>
+  <nav class="flex px-4 mt-4 overflow-x-auto">
+    <button class="lol-nav-btn active" data-role="">全部</button>
+    <button class="lol-nav-btn" data-role="mage">法师</button>
+    <button class="lol-nav-btn" data-role="tank">坦克</button>
+    <button class="lol-nav-btn" data-role="assassin">刺客</button>
+    <button class="lol-nav-btn" data-role="marksman">射手</button>
+    <button class="lol-nav-btn" data-role="support">辅助</button>
+    <button class="lol-nav-btn" data-role="fighter">战士</button>
+  </nav>
+  <section class="px-4 mt-4">
+    <form id="searchForm" class="flex space-x-2">
+      <input type="text" name="q" id="searchInput" placeholder="搜索英雄名称/别名" class="rounded border-gray-300 focus:ring-2 focus:ring-yellow-400 px-3 py-2 flex-1">
+      <button type="submit" class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">搜索</button>
+    </form>
+  </section>
+  <main id="heroList" class="mt-6 px-4 grid grid-cols-2 gap-4"></main>
+  <script>
+    const apiUrl = 'https://api-vue-base.itheima.net/api/lol/search';
+    const heroList = document.getElementById('heroList');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    let allHeroes = [], currentRole = '';
+    const navBtns = Array.from(document.querySelectorAll('.lol-nav-btn'));
+    navBtns.forEach(btn => btn.onclick = function() {
+      navBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRole = btn.dataset.role;
+      renderHeroes();
+    });
+    async function fetchHeroes(q = '') {
+      const res = await fetch(apiUrl + '?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      allHeroes = data.data || [];
+      renderHeroes();
+    }
+    function renderHeroes() {
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = allHeroes.filter(hero => {
+        const matchRole = !currentRole || (hero.roles && hero.roles.includes(currentRole));
+        const matchQ = !q || (hero.name + hero.alias + hero.title + (hero.keywords||'')).toLowerCase().includes(q);
+        return matchRole && matchQ;
+      });
+      heroList.innerHTML = filtered.length ? filtered.map(hero => `
+        <div class="lol-card cursor-pointer group" data-id="${hero.heroId}">
+          <img src="${hero.icon.replace(/[`\s]/g,'')}" alt="${hero.title}" class="rounded-t-xl w-full h-28 object-cover group-hover:scale-105 transition">
+          <div class="p-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-white">${hero.title}</span>
+              <span class="text-xs text-yellow-400">${(hero.roles||[]).map(r=>roleMap[r]||r).join('/')}</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-1">${hero.name}</div>
           </div>
         </div>
-      `).join('');
-        }
-        searchBtn.onclick = function () {
-            const q = searchInput.value.trim();
-            if (!q) { renderHeroes(allHeroes); return; }
-            const filtered = allHeroes.filter(h => {
-                const kw = (h.name + h.alias + h.title + h.keywords).toLowerCase();
-                return kw.includes(q.toLowerCase());
-            });
-            renderHeroes(filtered);
-        };
-        loadAllHeroes();
-    </script>
+      `).join('') : '<div class="col-span-2 text-center text-gray-400 py-8">暂无数据</div>';
+    }
+    const roleMap = { mage: '法师', tank: '坦克', assassin: '刺客', marksman: '射手', support: '辅助', fighter: '战士' };
+    searchForm.addEventListener('submit', function(e) { e.preventDefault(); renderHeroes(); });
+    heroList.addEventListener('click', function(e) {
+      let el = e.target;
+      while (el && !el.dataset.id && el !== heroList) el = el.parentElement;
+      if (el && el.dataset.id) {
+        location.href = `detail.html?id=${el.dataset.id}`;
+      }
+    });
+    fetchHeroes();
+  </script>
 </body>
-
-<style>
-  body {
-    font-size: 16px;
-  }
-  
-  @media (max-width: 768px) {
-    #heroList {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    
-    .container {
-      padding: 20px 8px;
-    }
-    
-    .cute-card {
-      padding: 20px 12px;
-    }
-    
-    h2 {
-      font-size: 1.8rem;
-    }
-    
-    .hero-avatar {
-      width: 50px;
-      height: 50px;
-    }
-    
-    input, button {
-      width: 100%;
-      margin-bottom: 8px;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .hero-card {
-      flex-direction: column;
-      text-align: center;
-    }
-    
-    .hero-avatar {
-      margin: 0 auto 10px auto;
-    }
-  }
-</style>
+</html>
