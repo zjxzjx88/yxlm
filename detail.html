@@ -5,100 +5,160 @@
     <meta charset="UTF-8">
     <title>英雄详情</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
+        body,
+        html {
+            height: 100%;
+        }
+
         body {
+            /* Removed background color */
+            color: #fff;
+            position: relative;
             margin: 0;
             padding: 0;
-            background: #f8f6f2;
-            font-family: '方正舒体', sans-serif;
+            overflow-x: hidden;
         }
 
-        .card {
-            max-width: 420px;
-            margin: 40px auto;
-            background: rgba(255, 255, 255, 0.322);
-            border-radius: 18px;
+        .lol-nav-btn {
+            color: #fff;
+            background: none;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            margin-right: 0.5rem;
+            transition: background .2s;
+        }
+
+        .lol-nav-btn.active,
+        .lol-nav-btn:hover {
+            background: #f5b971;
+            color: #181818;
+        }
+
+        .lol-card {
+            background: #232323;
+            border-radius: 1rem;
+            box-shadow: 0 2px 12px #0006;
             border: 1.5px solid #f5b971;
-            box-shadow: 0 4px 24px #f5e6c3a0;
-            padding: 24px 18px;
+            transition: transform .2s, box-shadow .2s;
+            position: relative;
+            z-index: 1;
         }
 
-        .title {
-            color: #d47c2f;
-            font-size: 2rem;
-            text-align: center;
-            margin-bottom: 18px;
+        .lol-title {
+            color: #f5b971;
+            font-weight: bold;
         }
 
-        button {
-            width: 60vw;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.377);
-            border-radius: calc(300vw/3.75);
+        .skin-img {
+            border-radius: 1rem;
+            box-shadow: 0 2px 12px #0006;
+            border: 1.5px solid #f5b971;
+            margin-bottom: 1rem;
+        }
+
+        /* Added utility class for hiding elements */
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
+    <!-- Added background video element -->
+    <!-- Removed autoplay attribute -->
     <video id="bgVideo" autoplay loop playsinline
-        style="position:fixed;left:-140vw;top: -118px;;width:300vw;height:130vh;object-fit:cover;z-index:-1; transform: scale(.8);">
+        style="position:fixed;left:-140vw;top: -118px;;width:300vw;height:130vh;object-fit:cover;z-index:-1; transform: scale(.8);max-width: none;">
         <source src="hhh.mp4" type="video/mp4">
         您的浏览器不支持视频播放。
     </video>
-    <div class="card">
-        <div class="title">英雄详情</div>
-        <div id="detail">加载中...</div>
-        <button id="videoBtn"
-            style="position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); padding:15px 30px; font-size:1.5em; z-index:100;">英雄视频点击播放</button>
+    <div class="max-w-xl mx-auto mt-6 lol-card p-6" id="heroCard"> <!-- Added ID to the card div -->
+        <div id="heroBase"></div>
+        <nav class="flex mt-6" id="detailNav"></nav>
+        <div id="detailContent" class="mt-4"></div>
     </div>
     <script>
         function getQuery(name) { const m = location.search.match(new RegExp('([?&]' + name + ')=([^&]*)')); return m ? decodeURIComponent(m[2]) : ''; }
         const id = getQuery('id');
-        const detail = document.getElementById('detail');
-        if (!id) { detail.innerHTML = '未获取到英雄ID'; }
+        const heroCard = document.getElementById('heroCard'); // Get the hero card element
+        const heroBase = document.getElementById('heroBase');
+        const detailNav = document.getElementById('detailNav');
+        const detailContent = document.getElementById('detailContent');
+        const bgVideo = document.getElementById('bgVideo'); // Get the video element
+        // Added 'video' to navs array
+        let navs = ['hero', 'skins', 'spells', 'video'], navData = {};
+        // Added 'video' mapping to navMap with the requested text
+        const navMap = { hero: '属性', skins: '皮肤', spells: '技能', video: '展示英雄技能' };
+        if (!id) { detailContent.innerHTML = '未获取到英雄ID'; }
         else {
             fetch(`https://api-vue-base.itheima.net/api/lol/info?id=${id}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.code === 200 && data.data) {
-                        const h = data.data.hero;
-                        const skins = data.data.skins;
-                        const spells = data.data.spells;
-                        detail.innerHTML = `
-              <div style='font-size:1.2rem;color:#d47c2f;font-weight:bold;'>${h.title}（${h.name}）</div>
-              <div style='color:#555;margin:6px 0;'>别名：${h.alias}</div>
-              <div style='color:#888;'>定位：${h.roles.join(' / ')} 难度：${h.difficulty}</div>
-              <div style='margin:10px 0;color:#d47c2f;'>皮肤：</div>
-              <div>${skins.map(s => `<span style='margin-right:8px;'>${s.name}</span>`).join('')}</div>
-              <div style='margin:10px 0;color:#d47c2f;'>技能：</div>
-              <div>${spells.map(sp => `<span style='margin-right:8px;'>${sp.name}</span>`).join('')}</div>
-            `;
+                        navData = data.data;
+                        renderNav();
+                        renderBase(navData.hero);
+                        showNav('hero'); // Default to showing hero details
                     } else {
-                        detail.innerHTML = '未找到英雄详情';
+                        detailContent.innerHTML = '未找到英雄详情';
                     }
                 })
-                .catch(() => { detail.innerHTML = '加载失败'; });
+                .catch(() => { detailContent.innerHTML = '加载失败'; });
         }
-        document.body.addEventListener('click', function () {
-            var v = document.getElementById('bgVideo');
-            if (v && v.paused) {
-                v.play().catch(() => { });
-            }
-        }, { once: true });
-        document.getElementById('videoBtn').addEventListener('click', function () {
-            // 隐藏所有非视频组件
-            document.querySelectorAll('body > *:not(video)').forEach(el => {
-                if (el.id !== 'videoBtn') el.style.display = 'none';
+        function renderBase(hero) {
+            if (!hero) return;
+            heroBase.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <img src="${(hero.avatar || hero.icon || '').replace(/[`\s]/g, '')}" alt="${hero.title}" class="w-24 h-24 rounded-xl border-2 border-yellow-400">
+          <div>
+            <div class="text-2xl lol-title">${hero.title}（${hero.name}）</div>
+            <div class="text-sm text-gray-400">别名：${hero.alias} | 定位：${(hero.roles || []).join('/')} | 难度：${hero.difficulty}</div>
+          </div>
+        </div>
+      `;
+        }
+        function renderNav() {
+            // Ensure the 'video' button is added
+            detailNav.innerHTML = navs.map((nav, i) => `<button class="lol-nav-btn${i === 0 ? ' active' : ''}" data-nav="${nav}">${navMap[nav]}</button>`).join('');
+            Array.from(detailNav.children).forEach(btn => {
+                btn.onclick = function () {
+                    Array.from(detailNav.children).forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    showNav(btn.dataset.nav);
+                };
             });
+        }
+        function showNav(nav) {
+            // Hide video and show content by default
+            bgVideo.pause();
+            bgVideo.currentTime = 0; // Reset video to start
+            heroCard.classList.remove('hidden'); // Show the hero card by default
 
-            // 播放视频
-            const video = document.querySelector('video');
-            video.style.display = 'block';
-            video.play();
-
-            // 隐藏按钮本身
-            this.style.display = 'none';
-        });
+            if (nav === 'hero') {
+                const h = navData.hero;
+                detailContent.innerHTML = `
+          <div class="mt-4">攻击：${h.attack}　防御：${h.defense}　法术：${h.magic}　难度：${h.difficulty}</div>
+          <div class="mt-2 text-gray-400">移动速度：${h.movespeed || '未知'}　金币：${h.goldPrice || '未知'}　点券：${h.couponPrice || '未知'}</div>
+        `;
+            } else if (nav === 'skins') {
+                const skins = navData.skins || [];
+                detailContent.innerHTML = skins.length ? skins.map(skin => `
+          <div class="mb-4"><img src="${(skin.mainImg || '').replace(/[`\s]/g, '')}" class="skin-img w-full" alt="${skin.name}"><div class="text-center mt-2">${skin.name}</div></div>
+        `).join('') : '<div class="text-gray-400">暂无皮肤数据</div>';
+            } else if (nav === 'spells') {
+                const spells = navData.spells || [];
+                detailContent.innerHTML = spells.length ? spells.map(spell => `
+          <div class="mb-4 flex items-center"><img src="${(spell.abilityIconPath || '').replace(/[`\s]/g, '')}" class="w-12 h-12 mr-4 rounded" alt="${spell.name}"><div><div class="font-bold">${spell.name}</div><div class="text-gray-400 text-sm">${spell.description || ''}</div></div></div>
+        `).join('') : '<div class="text-gray-400">暂无技能数据</div>';
+            } else if (nav === 'video') { // Handle video navigation
+                heroCard.classList.add('hidden'); // Hide the hero card
+                bgVideo.play(); // Play the video
+            }
+        }
     </script>
 </body>
 
